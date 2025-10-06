@@ -1,0 +1,265 @@
+### ==========================================
+### TEST API - BACKEND AGENTES IA
+### ==========================================
+### Instrucciones:
+### 1. Asegurate de tener el servidor corriendo: npm run dev
+### 2. Click en "Send Request" arriba de cada endpoint
+### 3. Guardá los IDs que te devuelven para usar en los siguientes pasos
+### ==========================================
+
+@baseUrl = http://localhost:4000
+@agentId = REEMPLAZAR_CON_ID_DEL_AGENTE
+@conversationId = REEMPLAZAR_CON_ID_DE_CONVERSACION
+
+### ==========================================
+### 🏥 HEALTH CHECK & INFO
+### ==========================================
+
+### 1. Health Check - Verificar que el servidor esté corriendo
+GET {{baseUrl}}/health
+
+### 2. Información del API - Ver todos los endpoints disponibles
+GET {{baseUrl}}/
+
+### ==========================================
+### 🤖 AGENTES
+### ==========================================
+
+### 3. Listar todos los agentes
+GET {{baseUrl}}/api/agents
+
+### 4. Crear un agente básico
+POST {{baseUrl}}/api/agents
+Content-Type: application/json
+
+{
+  "name": "Asistente General",
+  "description": "Un asistente útil para responder preguntas",
+  "system_prompt": "Eres un asistente amigable y servicial que ayuda a los usuarios.",
+  "model": "gpt-4-turbo-preview",
+  "temperature": 0.7,
+  "tools": ["calculator", "datetime"]
+}
+
+### 5. Crear un agente matemático
+POST {{baseUrl}}/api/agents
+Content-Type: application/json
+
+{
+  "name": "Profesor de Matemáticas",
+  "description": "Experto en resolver problemas matemáticos",
+  "system_prompt": "Eres un profesor de matemáticas que explica paso a paso. Siempre que veas números, usa la calculadora.",
+  "model": "gpt-4-turbo-preview",
+  "temperature": 0.3,
+  "tools": ["calculator"]
+}
+
+### 6. Crear agente programador
+POST {{baseUrl}}/api/agents
+Content-Type: application/json
+
+{
+  "name": "Asistente de Código",
+  "description": "Ayuda con programación en TypeScript y Python",
+  "system_prompt": "Eres un experto programador que ayuda a escribir código limpio y eficiente.",
+  "model": "gpt-4-turbo-preview",
+  "temperature": 0.5,
+  "tools": ["datetime"]
+}
+
+### 7. Obtener un agente específico
+# ⚠️ Reemplazá {{agentId}} con un ID real
+GET {{baseUrl}}/api/agents/{{agentId}}
+
+### 8. Actualizar un agente
+# ⚠️ Reemplazá {{agentId}} con un ID real
+PUT {{baseUrl}}/api/agents/2df4348e-b923-4ac3-916c-ff551ef8b434
+Content-Type: application/json
+
+{
+  "name": "Asistente Actualizado",
+  "temperature": 0.8,
+  "description": "Descripción actualizada"
+}
+
+### 9. Eliminar un agente
+# ⚠️ Reemplazá {{agentId}} con un ID real
+DELETE {{baseUrl}}/api/agents/{{agentId}}
+
+### ==========================================
+### 💬 CONVERSACIONES
+### ==========================================
+
+### 10. Listar todas las conversaciones
+GET {{baseUrl}}/api/conversations
+
+### 11. Listar conversaciones de un agente específico
+# ⚠️ Reemplazá {{agentId}} con un ID real
+GET {{baseUrl}}/api/conversations?agent_id=2df4348e-b923-4ac3-916c-ff551ef8b434
+
+### 12. Crear una nueva conversación
+# ⚠️ IMPORTANTE: Primero creá un agente (paso 4), copiá su ID y pegalo abajo
+POST {{baseUrl}}/api/conversations
+Content-Type: application/json
+
+{
+  "agent_id": "69840100-0326-431b-af6e-891856b357c1",
+  "title": "Mi primera conversación"
+}
+
+### 13. Crear conversación sobre matemáticas
+POST {{baseUrl}}/api/conversations
+Content-Type: application/json
+
+{
+  "agent_id": "{{agentId}}",
+  "title": "Ayuda con Matemáticas"
+}
+
+### 14. Obtener una conversación con sus mensajes
+# ⚠️ Reemplazá {{conversationId}} con un ID real
+GET {{baseUrl}}/api/conversations/{{conversationId}}
+
+### 15. Actualizar título de conversación
+# ⚠️ Reemplazá {{conversationId}} con un ID real
+PUT {{baseUrl}}/api/conversations/77dbf4b8-d5ec-4ace-864f-e7aaf8ce95ee
+Content-Type: application/json
+
+{
+  "title": "Conversación de datetime"
+}
+
+### 16. Eliminar una conversación
+# ⚠️ Reemplazá {{conversationId}} con un ID real
+DELETE {{baseUrl}}/api/conversations/{{conversationId}}
+
+### ==========================================
+### 💭 CHAT - ENVIAR MENSAJES
+### ==========================================
+
+### 17. Enviar mensaje simple
+# ⚠️ IMPORTANTE: Necesitas agent_id y conversation_id válidos
+POST {{baseUrl}}/api/chat
+Content-Type: application/json
+
+{
+  "conversation_id": "77dbf4b8-d5ec-4ace-864f-e7aaf8ce95ee",
+  "agent_id": "69840100-0326-431b-af6e-891856b357c1",
+  "message": "que hora es ahora?"
+}
+
+### 18. Enviar mensaje con cálculo matemático
+# El agente debe tener la tool "calculator" habilitada
+POST {{baseUrl}}/api/chat
+Content-Type: application/json
+
+{
+  "conversation_id": "{{conversationId}}",
+  "agent_id": "{{agentId}}",
+  "message": "¿Cuánto es 25 * 4 + 17?"
+}
+
+### 19. Preguntar por la fecha/hora
+# El agente debe tener la tool "datetime" habilitada
+POST {{baseUrl}}/api/chat
+Content-Type: application/json
+
+{
+  "conversation_id": "{{conversationId}}",
+  "agent_id": "{{agentId}}",
+  "message": "¿Qué fecha y hora es ahora?"
+}
+
+### 20. Pregunta compleja
+POST {{baseUrl}}/api/chat
+Content-Type: application/json
+
+{
+  "conversation_id": "{{conversationId}}",
+  "agent_id": "{{agentId}}",
+  "message": "Explicame qué es la inteligencia artificial en términos simples"
+}
+
+### 21. Obtener todos los mensajes de una conversación
+# ⚠️ Reemplazá {{conversationId}} con un ID real
+GET {{baseUrl}}/api/chat/messages/{{conversationId}}
+
+### ==========================================
+### 🎯 FLUJO COMPLETO DE PRUEBA
+### ==========================================
+### Seguí estos pasos en orden:
+
+### PASO 1: Crear un agente
+POST {{baseUrl}}/api/agents
+Content-Type: application/json
+
+{
+  "name": "Mi Agente de Prueba",
+  "description": "Agente para testing completo",
+  "system_prompt": "Eres un asistente útil y amigable.",
+  "model": "gpt-4-turbo-preview",
+  "temperature": 0.7,
+  "tools": ["calculator", "datetime"]
+}
+# → Guardá el "id" que te devuelve
+
+### PASO 2: Crear una conversación
+# Reemplazá TU_AGENT_ID con el id del paso anterior
+POST {{baseUrl}}/api/conversations
+Content-Type: application/json
+
+{
+  "agent_id": "TU_AGENT_ID",
+  "title": "Conversación de prueba"
+}
+# → Guardá el "id" que te devuelve
+
+### PASO 3: Enviar primer mensaje
+# Reemplazá TU_CONVERSATION_ID y TU_AGENT_ID
+POST {{baseUrl}}/api/chat
+Content-Type: application/json
+
+{
+  "conversation_id": "TU_CONVERSATION_ID",
+  "agent_id": "TU_AGENT_ID",
+  "message": "Hola! Presentate y contame qué puedes hacer"
+}
+
+### PASO 4: Enviar segundo mensaje con cálculo
+POST {{baseUrl}}/api/chat
+Content-Type: application/json
+
+{
+  "conversation_id": "TU_CONVERSATION_ID",
+  "agent_id": "TU_AGENT_ID",
+  "message": "Calculá 150 + 275"
+}
+
+### PASO 5: Ver todo el historial
+GET {{baseUrl}}/api/chat/messages/TU_CONVERSATION_ID
+
+### ==========================================
+### 📝 NOTAS IMPORTANTES
+### ==========================================
+### 
+### - Asegurate de tener el .env configurado con:
+###   - SUPABASE_URL
+###   - SUPABASE_SERVICE_ROLE_KEY
+###   - OPENAI_API_KEY
+###
+### - Las tools disponibles son:
+###   - calculator: realiza cálculos matemáticos
+###   - datetime: obtiene fecha y hora actual
+###   - web_search: búsqueda web (placeholder)
+###
+### - Para usar en Postman:
+###   1. Importá este archivo
+###   2. Cambiá las variables {{agentId}} y {{conversationId}}
+###   3. O usá los valores directamente en el JSON
+###
+### - Para usar con REST Client (VS Code):
+###   1. Instalá la extensión "REST Client"
+###   2. Hacé click en "Send Request"
+###   3. Modifica las variables al inicio del archivo
+###
+### ==========================================
