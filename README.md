@@ -130,11 +130,16 @@ SUPABASE_URL=https://tu-proyecto.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key
 OPENAI_API_KEY=sk-tu_openai_key
 N8N_APPOINTMENT_API_URL=https://tu-n8n-instance.com/webhook/appointments
+LANGSMITH_TRACING=true
+LANGSMITH_ENDPOINT=https://api.smith.langchain.com
+LANGSMITH_API_KEY=lsv2_xxx
+LANGSMITH_PROJECT=ai-agents-backend
 ```
 
 **Variables opcionales:**
 - `FRONTEND_URL`: URL de tu frontend para CORS (opcional en desarrollo)
 - `N8N_APPOINTMENT_API_URL`: URL de la API de N8N para gestión de turnos (requerido solo si usas herramientas de turnos)
+- `LANGCHAIN_PROJECT`: Alias aceptado por SDK; si está presente se usa como nombre de proyecto
 
 ### **3. Configurar base de datos**
 1. Ve a tu proyecto en [Supabase](https://supabase.com)

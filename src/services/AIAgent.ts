@@ -24,6 +24,25 @@ export class AIAgent {
     this.toolHandler = new ToolHandler();
   }
 
+  private getRunConfig(conversationId: string) {
+    const tags = [
+      'ai-agents-backend',
+      'agent',
+      `agent:${this.agentId}`,
+      `conversation:${conversationId}`,
+    ];
+    const metadata = {
+      agentId: this.agentId,
+      conversationId,
+      project:
+        process.env.LANGCHAIN_PROJECT ||
+        process.env.LANGSMITH_PROJECT ||
+        'ai-agents-backend',
+    } as Record<string, any>;
+
+    return { tags, metadata } as any;
+  }
+
   async initialize(): Promise<this> {
     this.config = await this.loadConfig();
     
@@ -316,30 +335,57 @@ export class AIAgent {
 
       const messages: BaseMessage[] = [];
 
-      let systemPrompt = this.config?.system_prompt || 'Eres un asistente útil y amigable.';
+      let systemPrompt = this.config?.system_prompt;
       
       if (state.context) {
         systemPrompt += `\n\nContexto relevante:\n${state.context}`;
       }
 
-      if (state.toolResults && state.toolResults.length > 0) {
-        systemPrompt += `\n\nResultados de herramientas:\n${JSON.stringify(state.toolResults, null, 2)}`;
+      const toolResults = state.toolResults || [];
+      const hasSuccessfulTool = toolResults.some(r => {
+        try {
+          const parsed = typeof r.result === 'string' ? JSON.parse(r.result) : r.result;
+          return parsed && parsed.success === true;
+        } catch {
+          return false;
+        }
+      });
+
+      if (toolResults.length > 0) {
+        systemPrompt += `\n\nResultados de herramientas (para que los consideres al responder, no los inventes):\n${JSON.stringify(toolResults, null, 2)}`;
       }
 
-      messages.push(new SystemMessage(systemPrompt));
+      
+      // Si no hubo tool results pero el usuario pidió turnos, fuerza un comportamiento conservador
+      const lastUserText = state.messages[state.messages.length - 1]?.content?.toLowerCase?.() || '';
+      const appointmentIntent = /(turno|reservar|agendar|disponibilidad|cancelar|confirmar)/i.test(lastUserText);
+      if (!hasSuccessfulTool && appointmentIntent && toolResults.length === 0) {
+        systemPrompt += `\n\nAdvertencia: El usuario pidió gestionar turnos pero no hay respuesta de herramientas. No confirmes acciones. Pregunta los datos faltantes o indica que necesitas ejecutar la herramienta cuando dispongas de la información.`;
+      }
+
+      // Si el agente tiene tools de turnos habilitadas, añade guía específica
+      const enabledTools = this.config?.tools || [];
+      const hasAppointmentTools = enabledTools.some(t => (
+        t.includes('appointment') || t.includes('appointments')
+      ));
+      
+      // Aseguramos que systemPrompt nunca sea null o undefined
+      messages.push(new SystemMessage(systemPrompt ?? ""));
 
       for (const msg of state.messages) {
         if (msg.role === 'user') {
-          messages.push(new HumanMessage(msg.content));
+          messages.push(new HumanMessage(msg.content ?? ""));
         } else if (msg.role === 'assistant') {
           messages.push(new AIMessage(msg.content));
         }
       }
 
       // Solución al error de tipos: convertir BaseMessage[] a BaseMessageLike[]
+      // Configuración de tracing (LangSmith/LangChain)
+      const runConfig = this.getRunConfig(state.conversationId);
+
       // Esto puede requerir importar BaseMessageLike y mapear los mensajes si es necesario.
-      // Pero si los mensajes ya cumplen con la interfaz, simplemente castear:
-      const response = await this.llm.invoke(messages as any);
+      const response = await this.llm.invoke(messages as any, runConfig);
 
       const newMessages = [
         ...state.messages,
@@ -392,8 +438,9 @@ export class AIAgent {
         conversationId,
       };
 
-      // Ejecutar el grafo
-      const finalState = await this.graph.invoke(initialState);
+      // Ejecutar el grafo con configuración de tracing
+      const runConfig = this.getRunConfig(conversationId);
+      const finalState = await this.graph.invoke(initialState, runConfig);
 
       // Guardar respuesta del asistente
       const assistantMessage = finalState.messages[finalState.messages.length - 1];
