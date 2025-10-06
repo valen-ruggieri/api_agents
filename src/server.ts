@@ -1,9 +1,9 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import agentRoutes from './routes/agents.js';
-import chatRoutes from './routes/chat.js';
-import conversationRoutes from './routes/conversations.js';
+import agentRoutes from './routes/agents';
+import chatRoutes from './routes/chat';
+import conversationRoutes from './routes/conversations';
 
 // Cargar variables de entorno
 dotenv.config();

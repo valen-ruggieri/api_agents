@@ -6,10 +6,11 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node server.js",
+    "start": "node dist/server.js",
     "start:ts": "tsx src/server.ts",
     "start:prod": "node dist/server.js",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "render": "node dist/server.js"
   },
   "keywords": ["ai", "typescript", "langchain", "langgraph"],
   "author": "",
