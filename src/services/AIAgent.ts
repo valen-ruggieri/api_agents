@@ -308,7 +308,9 @@ export class AIAgent {
             }
           }
 
-          if (shouldExecute) {
+          // Evitar ejecutar tools sin parámetros requeridos
+          const hasInput = toolInput && Object.keys(toolInput).length > 0;
+          if (shouldExecute && hasInput) {
             console.log(`🔧 Executing ${tool.name} with input:`, toolInput);
             const result = await tool.func(toolInput);
             toolResults.push({ tool: tool.name, result });
