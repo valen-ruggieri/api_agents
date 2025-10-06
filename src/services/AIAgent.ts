@@ -5,6 +5,7 @@ import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
 import { supabase } from '../config/supabase.js';
 import type { Agent, AgentState, Message } from '../types/index.js';
+import { appointmentTools, ToolHandler } from './tools/index.js';
 
 export class AIAgent {
   private agentId: string;
@@ -13,12 +14,14 @@ export class AIAgent {
   private embeddings: OpenAIEmbeddings;
   private graph: any = null;
   private tools: DynamicStructuredTool[] = [];
+  private toolHandler: ToolHandler;
 
   constructor(agentId: string) {
     this.agentId = agentId;
     this.embeddings = new OpenAIEmbeddings({
       openAIApiKey: process.env.OPENAI_API_KEY,
     });
+    this.toolHandler = new ToolHandler();
   }
 
   async initialize(): Promise<this> {
@@ -88,7 +91,42 @@ export class AIAgent {
           return `Resultados de búsqueda para: ${query}`;
         },
       }),
+
+      // Herramientas de turnos/citas
+      appointments: new DynamicStructuredTool({
+        name: 'appointments',
+        description: 'Gestión completa de turnos y citas: consultar, crear, editar, confirmar, cancelar turnos',
+        schema: z.object({
+          action: z.string().describe('Acción a realizar'),
+          parameters: z.any().optional().describe('Parámetros específicos de la acción')
+        }),
+        func: async ({ action, parameters = {} }: { action: string; parameters?: any }) => {
+          try {
+            const result = await this.toolHandler.executeTool(action, parameters);
+            return JSON.stringify(result);
+          } catch (error: any) {
+            return JSON.stringify({ error: error.message });
+          }
+        },
+      }),
     };
+
+    // Agregar herramientas de turnos individuales como tools disponibles
+    appointmentTools.forEach((tool) => {
+      availableTools[tool.name] = new DynamicStructuredTool({
+        name: tool.name,
+        description: tool.description,
+        schema: z.object({}).passthrough(), // Permite cualquier propiedad
+        func: async (parameters: any) => {
+          try {
+            const result = await this.toolHandler.executeTool(tool.name, parameters);
+            return JSON.stringify(result);
+          } catch (error: any) {
+            return JSON.stringify({ error: error.message });
+          }
+        },
+      });
+    });
 
     return enabledTools
       .filter(name => name in availableTools)

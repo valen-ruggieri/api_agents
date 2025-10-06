@@ -1,0 +1,97 @@
+# Test del Agente con Tools de Turnos
+# Usar con REST Client
+
+@baseUrl = http://localhost:4000
+@agentId = PEGAR_AGENT_ID_AQUI
+@conversationId = PONER_CONVERSATION_ID_AQUI
+
+###
+
+### PASO 1: Crear un agente especializado en turnos
+POST {{baseUrl}}/api/agents
+Content-Type: application/json
+
+{
+  "name": "Asistente de Barbería",
+  "description": "Agente que gestiona turnos de barbería",
+  "system_prompt": "Eres un asistente virtual de una barbería. Tu trabajo es ayudar a los clientes a:\n- Consultar disponibilidad de turnos\n- Agendar nuevos turnos\n- Ver sus turnos existentes\n- Modificar o cancelar turnos\n- Confirmar turnos\n\nServicios disponibles:\n1. Corte de pelo - 30min - $5000 - Barberos: Carlos, Juan\n2. Barba - 20min - $3000 - Barberos: Carlos, Juan\n3. Corte + Barba - 45min - $8000 - Barberos: Carlos, Juan\n\nHorarios: Lunes a Sábado 09:30 a 20:30\n\nSiempre sé amigable, profesional y eficiente. Cuando el cliente quiera agendar, asegúrate de:\n1. Confirmar el servicio deseado\n2. Preguntar la fecha y hora preferida\n3. Verificar disponibilidad\n4. Pedir su email\n5. Confirmar método de pago (local o link)\n6. Crear el turno\n\nSi necesitas event_id para modificar/cancelar un turno, primero consulta los turnos del cliente.",
+  "model": "gpt-4-turbo-preview",
+  "temperature": 0.7,
+  "tools": [
+    "get_appointments_by_id",
+    "get_appointments",
+    "create_appointment",
+    "edit_appointment",
+    "confirm_appointment",
+    "cancel_appointment",
+    "complete_appointment",
+    "verify_appointment_payment"
+  ]
+}
+
+###
+
+### PASO 2: Crear conversación
+# Copiá el agent_id del paso anterior o usa {{agentId}}
+POST {{baseUrl}}/api/conversations
+Content-Type: application/json
+
+{
+  "agent_id": "419a061d-3292-40da-872e-75420cdf8925",
+  "title": "Atención al cliente"
+}
+
+###
+
+### PASO 3: Cliente pregunta por disponibilidad (el agente responde)
+POST {{baseUrl}}/api/chat
+Content-Type: application/json
+
+{
+  "conversation_id": "9ab9c1a3-7609-438b-8136-86b17b0ddd7d",
+  "message": "Hola! Quiero un turno para corte de pelo el 15 de octubre a las 14hs",
+  "agent_id": "419a061d-3292-40da-872e-75420cdf8925"
+}
+
+###
+
+### PASO 4: Cliente quiere agendar
+POST {{baseUrl}}/api/chat
+Content-Type: application/json
+
+{
+  "conversation_id": "{{conversationId}}",
+  "message": "Perfecto, quiero reservar ese horario. Mi email es juan@email.com y prefiero pagar en el local",
+  "agent_id": "{{agentId}}"
+}
+
+###
+
+### PASO 5: Cliente quiere ver sus turnos
+POST {{baseUrl}}/api/chat
+Content-Type: application/json
+
+{
+  "conversation_id": "{{conversationId}}",
+  "message": "¿Qué turnos tengo agendados?",
+  "agent_id": "{{agentId}}"
+}
+
+###
+
+### PASO 6: Cliente quiere cancelar un turno
+POST {{baseUrl}}/api/chat
+Content-Type: application/json
+
+{
+  "conversation_id": "{{conversationId}}",
+  "message": "Necesito cancelar el turno del 15 de octubre",
+  "agent_id": "{{agentId}}"
+}
+
+###
+
+### PASO 7: Ver historial de mensajes de la conversación
+GET {{baseUrl}}/api/chat/messages/{{conversationId}}
+
+###
