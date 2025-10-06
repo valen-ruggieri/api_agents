@@ -2,11 +2,12 @@
   "name": "ai-agents-backend-ts",
   "version": "1.0.0",
   "description": "Backend TypeScript con Node.js + Express para agentes IA",
-  "main": "dist/server.js",
+  "main": "server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "tsx src/server.ts",
+    "start": "node server.js",
+    "start:ts": "tsx src/server.ts",
     "start:prod": "node dist/server.js",
     "type-check": "tsc --noEmit"
   },

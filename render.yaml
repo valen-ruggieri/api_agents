@@ -3,7 +3,7 @@ services:
     name: ai-agents-backend
     env: node
     buildCommand: npm install
-    startCommand: npx tsx src/server.ts
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
